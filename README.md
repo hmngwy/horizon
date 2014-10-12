@@ -4,7 +4,7 @@ horizon
 A bottomless, volatile, imageboard.
 
 ##### Inspiration
-I found inspiration in imageboards, the reddits, and some modern takes on forums that still follow the traditional limited depth which is generally _Topic > Thread > Responses_. It's arguable that since some systems make responses depthless, these systems should be considered depthless, but how the three states are presented with differentation of usage still places it in the same traditional box. 
+I found inspiration in imageboards, the reddits, and some modern takes on forums that still follow the traditional limited depth which is generally _Topic > Thread > Responses_. It's arguable that since some systems make responses depthless, these systems should be considered depthless, but how the three states are differentiated by usage and presentation kind of places it in the same traditional box.
 
 ##### Experiment
 This experiment removes (a.) the depth limitation on the whole system, (b.) the restriction on how root boards are created, (c.) and the differentiation of use and treatment of Topics, Threads, and Responses, with the goal of learning how a community would use the system.
