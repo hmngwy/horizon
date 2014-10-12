@@ -1,0 +1,263 @@
+*:focus {
+    outline: none;
+}
+body, html
+{
+    margin: 0;
+    padding: 0;
+    height:100%;
+    color:#2a2a2a;
+    font-family: 'Inconsolata';
+}
+body
+{
+    overflow-y: hidden;
+    overflow-x: auto;
+
+}
+.post-form
+{
+    width: 18.75em;
+    padding:1em;
+
+    position: fixed;
+    right: 0;
+    bottom: 0;
+
+    background-color: #ddd;
+}
+    .post-form h3
+    {
+        margin: 0 0 1em 0;
+        font-family: 'Inconsolata', monospace;
+    }
+    [data-userinput-postform-captcha],
+    [data-userinput-postform-parent],
+    [data-userinput-postform-body],
+    [data-userinput-postform-submit]
+    {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #eee;
+        font-size:18px;
+        padding:.75em .5em;
+        font-family: 'Inconsolata', monospace;
+        color: #555;
+        display:block;
+    }
+        [data-userinput-postform-body],
+        [data-userinput-postform-parent],
+        #recaptcha_image
+        {
+            border: 1px solid #eee;
+            margin-bottom:.25em;
+        }
+        [data-userinput-postform-parent]
+        {
+            background-color: transparent;
+            border:0;
+            color:#999;
+            font-size:1em;
+            display: none;
+        }
+        [data-userinput-postform-body]
+        {
+            height: 8em;
+        }
+    [data-userinput-postform-submit]
+    {
+        padding: 0;
+        color: white;
+        background-color: lightgreen;
+        border: 0;
+        position: absolute;
+        bottom: 19px;
+        width: 50px;
+        height: 41px;
+        right: 19px;
+        line-height: 41px;
+    }
+    .captchawrap
+    {
+        text-align:center;
+    }
+
+    section.columns
+    {
+        height: 100%;
+        /* min-width:100%; */
+        max-width: 3000%;
+        display: inline-flex;
+        padding-right: 20.75em;
+    }
+    section.columns:empty
+    {
+        content:'this is empty';
+    }
+        [data-node-close]:before
+        {
+            content: '✖︎';
+        }
+        [data-node-close] {
+            cursor:pointer;
+            position: fixed;
+            right: 0;
+            top: 0;
+            background: rgba(0,0,0,0.1);
+            padding: .3em .5em;
+            z-index: 9000;
+        }
+    [data-level]
+    {
+        display: inline-block;
+        overflow-x:hidden;
+        overflow-y:scroll;
+        position: relative;
+        height: 100%;
+
+        width:580px;
+        /* opacity: 0.8; */
+    }
+        [data-level] ul
+        {
+            padding: 0;
+            margin: 0;
+        }
+    [data-level] ul:empty:before {
+        content: 'Nothing yet. Write something.';
+        text-align: center;
+        padding: 1em 0;
+        width: 100%;
+        display: block;
+        color: #777;
+    }
+    [data-level]:last-of-type
+    {
+        background-color: #fafafa;
+        opacity:1;
+    }
+        [data-node]
+        {
+            list-style: none;
+            line-height: 1.3em;
+            width: 100%;
+            font-family: 'Inconsolata';
+            padding: .5em;
+            min-height: 60px;
+            clear:both;
+            position:relative;
+            overflow:auto;
+            box-sizing: border-box;
+        }
+            [data-node-body]
+            {
+                word-wrap: break-word;
+                white-space: pre;
+                margin-top:.25em;
+            }
+                [data-node-body] .media_link {
+                    background-color: #EAEAEA;
+                    color: #555;
+                    font-size: .9em;
+                    padding: 4px 0;
+                    text-decoration: none;
+                }
+        [data-node]:first-child
+        {
+            margin-top: 0;
+        }
+        [data-node].active
+        {
+            background-color: #fdffe6;
+        }
+        [data-node-media]
+        {
+            width: 225px;
+            float: left;
+            margin-right:.5em;
+            background-color:#999;
+        }
+            [data-node-media][data-twttr-id]
+            {
+                background:transparent;
+            }
+        [data-node-media] img
+        {
+            max-width: 100%;
+            display:block;
+            margin:auto;
+        }
+        [data-node-media]:empty
+        {
+            height: 1.7em;
+            background-color:#CFCFCF;
+        }
+        [data-node] .meta
+        {
+            color: #999;
+            font-size: .925em;
+        }
+        [data-node-user-button],
+        [data-node-childrencount]
+        {
+            cursor:pointer;
+            color:#777;
+            background-color: #eee;
+            display:inline-block;
+            padding: .25em;
+        }
+        [data-node-user-button]
+        {
+            background-color: #ddd;
+        }
+
+        [data-level="root"]
+        {
+            width:350px;
+        }
+        [data-level="root"] [data-node]
+        {
+            cursor:pointer;
+        }
+        [data-level="root"] [data-node-body]
+        {
+            margin-top: .25em;
+            margin-left: .25em;
+            line-height: 55px;
+            height: 55px;
+            display: inline-block;
+            vertical-align:middle;
+            max-width:250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        [data-level="root"] [data-node-media]
+        {
+            display: inline-block;
+            width: 65px;
+            height: 65px;
+            border-radius: 60px;
+            border: 0;
+            background-color: #DDD;
+            background-size:cover;
+            margin-right: .5em;
+            overflow: hidden;
+        }
+        [data-level="root"] [data-node-body] .media_link
+        {
+            display: none;
+        }
+        [data-level="root"] [data-node-media] img
+        {
+            max-width: initial;
+            width: 200%;
+            margin: auto;
+            left: -50%;
+            position: relative;
+        }
+        /*[data-level="root"] [data-node-media] > *,*/
+        [data-level="root"] .meta
+        {
+            display: none;
+        }

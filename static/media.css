@@ -1,0 +1,27 @@
+[data-node-media="twitter"] .twitter-tweet
+{
+    min-width: initial !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+[data-node-media="youtube"] a
+{
+    width: 100%;
+    height: 169px;
+
+    display: block;
+    background-size: cover;
+    position: relative;
+}
+[data-node-media="youtube"] a:before {
+    opacity: 1;
+    background: no-repeat url(http://ssl.gstatic.com/support/content/images/sprites/core-4eb4cfcfd8f28f6b049a2cd914059a9a.png) -83px -66px;
+    content: '';
+    height: 64px;
+    left: 50%;
+    margin: -32px 0 0 -32px;
+    padding: 0;
+    position: absolute;
+    top: 50%;
+    width: 64px;
+}
