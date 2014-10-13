@@ -29,7 +29,7 @@ app.get('/sesh', function(req, res) {
 });
 
 // MONGOOSE SCHEMA SETUP
-mongoose.connect("mongodb://localhost/tree");
+mongoose.connect( process.env.MONGOLAB_URI || "mongodb://localhost/tree");
 
 var PostSchema = mongoose.Schema({
     body: { type: String, index: false },
