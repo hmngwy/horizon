@@ -5,9 +5,6 @@ define([
 ], function(_, Backbone, $) {
 
     var refresh_time = 5000;
-    var columns = {};
-    var refresh;
-
 
     var Post = Backbone.Model.extend({
         url: '/n/',
@@ -160,6 +157,9 @@ define([
             // this.render(id);
         }
     });
+
+    var columns = {};
+    var refresh;
 
     var AppRouter = Backbone.Router.extend({
       routes: {
