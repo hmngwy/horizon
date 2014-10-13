@@ -2,7 +2,7 @@ TODO
 ====
 
 ##### Essential
-- sort by __responses__, __most recent__ (root only)
+- sort by __most responses__, __newest__, _oldest_ (show which is default, newest for root, oldest for the rest)
 - highlight mentions
 - posting error response
 - pruning system
