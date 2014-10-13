@@ -4,6 +4,8 @@ define([
   'jquery'
 ], function(_, Backbone, $) {
 
+    var refresh_time = 5000;
+
     var Post = Backbone.Model.extend({
         url: '/n/',
         initialize: function(){
@@ -15,7 +17,7 @@ define([
             this.parent = options.parent;
         },
         url: function(){
-            if(this.parent!=undefined)
+            if(this.parent!=undefined && this.parent!='root')
                 return '/n/'+this.parent+'/immediate';
             else
                 return '/n/roots';
@@ -55,46 +57,43 @@ define([
                 text: transformed_text || text
             };
         },
-        render: function (id) {
+        render: function (options) {
+            var options = options || {};
+            options.id = options.id || 'root';
             var that = this;
-            var posts = new PostCollection([], {parent:id});
+            var posts = new PostCollection([], {parent:options.id});
             posts.fetch({
                 success: function(docs) {
 
+                    console.log('loaded : '+options.id);
 
                     if(docs.models.length!=0)
                     {
                         // depth hack
                         var depth = docs.models[0].get('path').split(",").length;
                     }else{
-                        var deepest = parseInt($('[data-node="'+id+'"]').parents('[data-level]').attr('data-depth'));
+                        var deepest = parseInt($('[data-node="'+options.id+'"]').parents('[data-level]').attr('data-depth'));
                         var depth = (deepest + 1) || 1;
                     }
 
-                    console.log(depth);
+
 
                     //MAYBE MOVE THIS TO ROUTER AND PASS EL TO VIEW INSTANCIATION
                     //set up column
                     var columnMarkup = _.template($('[type="underscore/template"][name="level"]').html(),
-                        {id: id||'root', depth: depth});
+                        {id: options.id||'root', depth: depth});
                     var columnEl = $('[data-depth="'+depth+'"]');
-                    if(columnEl.length!=0) //if this depth doesn't exist in the client
+                    if($('.columns').find('[data-level="'+options.id+'"]').length==0) //if this node isn't on the frontend
                     {
-                        columnEl.remove();
+                        console.log('inserting because '+options.id);
+                        $('.columns').append( columnMarkup ); //inserting level
                     }
-                    $('.columns').append( columnMarkup ); //inserting level
+
                     //MOVE UP TO HERE
 
-                    // this scrolls on load
-                    // if($('.columns').innerWidth()>$('body').width())
-                    // {
-                    //     var left = $('.columns').outerWidth() - $(window).width();
-                    //     $('body').scrollLeft(left);
-                    // }
+                    columnEl = $('[data-depth="'+depth+'"]').attr('data-level', options.id);
 
-                    columnEl = $('[data-depth="'+depth+'"]').attr('data-level', id);
 
-                    columnEl.find('ul').html('');
 
                     //column contents
                     _.each(docs.models, function(doc){
@@ -102,14 +101,19 @@ define([
                         media = that.get_media(doc.get('body'));
                         doc.set('body', media.text)
 
-                        var nodeMarkup = _.template($('[type="underscore/template"][name="node"]').html(), {
-                            post: doc,
-                            media_markup: (depth>1) ? media.markup : '',
-                            media_type: media.type,
-                            media_url: media.target
-                        });
-                        columnEl.find('ul').append( nodeMarkup ); //inserting each node item
-                        // console.log(columnEl.find('ul'));
+
+                        if(columnEl.find('ul').find('[data-node="'+doc.get('_id')+'"]').length==0) //if node not in front-end
+                        {
+                            var nodeMarkup = _.template($('[type="underscore/template"][name="node"]').html(), {
+                                post: doc,
+                                media_markup: (depth>1) ? media.markup : '',
+                                media_type: media.type,
+                                media_url: media.target
+                            });
+                            columnEl.find('ul').append( nodeMarkup ); //inserting each node item
+                            // console.log(columnEl.find('ul'));
+
+                        }
 
                     });
 
@@ -121,14 +125,16 @@ define([
                         depth++;
                     }
 
-                    console.log('end open');
+                    // console.log('end open');
+
+                    if(options.callback)
+                        options.callback();
+
                     //set form parent id
                     $('[data-userinput-postform-parent]').val($('[data-level]').last().attr('data-level'));
 
                     //resort everything just in case
-                    $('[data-level]').sort(function(a,b){
-                        return $(a).attr('data-depth') > $(b).attr('data-depth');
-                    }).appendTo('.columns');
+
                 }
             });
         },
@@ -145,7 +151,6 @@ define([
         {
             active_absolute_path = ($(el.target).attr('data-node-absolute-path') || $(el.target).parents('[data-node]').attr('data-node-absolute-path')).replace(/^,/, '');
             location.hash = "#/p/"+ active_absolute_path;
-            console.log('opening'+active_absolute_path);
 
             // var id = $(el.target).attr('data-node') || $(el.target).parents('[data-node]').attr('data-node');
 
@@ -153,12 +158,14 @@ define([
         }
     });
 
+    var columns = {};
+    var refresh;
 
     var AppRouter = Backbone.Router.extend({
       routes: {
 
           "": "getRoots",
-          "x/:id": "getPost",
+          //"x/:id": "getPost",
           //"p/": "getPath",
           "p/:path": "getPath",
 
@@ -169,13 +176,13 @@ define([
     var app_router = new AppRouter;
     app_router.on('route:getRoots', function (id) {
         console.log('get roots');
-        column = new ColumnView();
-        column.render();
+        columns['root'] = new ColumnView();
+        columns['root'].render({callback: function(){ autorefresh(refresh_time) }});
     });
     app_router.on('route:getPost', function (id) {
         console.log('get post');
         column = new ColumnView();
-        column.render(id);
+        column.render({id:id, callback: function(){ autorefresh(refresh_time) }});
     });
     app_router.on('route:getPath', function (path) {
 
@@ -188,18 +195,28 @@ define([
         //but check root first
         if($('[data-level="root"]').length==0)
         {
-            column = new ColumnView();
-            column.render();
+            columns['root'] = new ColumnView();
+            columns['root'].render({});
         }
 
         //now loop through levels
         if(levels)
         {
-            _.each(levels, function(level){
+            _.each(levels, function(level, i){
                 if($('[data-level="'+level+'"]').length==0)
                 {
-                    column = new ColumnView();
-                    column.render(level);
+                    columns[level] = new ColumnView();
+                    options = {id:level}
+                    if(i == levels.length-1)
+                        options.callback = function(){
+                            autorefresh(refresh_time);
+                            //run sort on the very last
+                            $('[data-level]').sort(function(a,b){
+                                return $(a).attr('data-depth') > $(b).attr('data-depth');
+                            }).appendTo('.columns');
+                        }
+
+                    columns[level].render(options);
                 }
             });
         }
@@ -221,8 +238,6 @@ define([
     // Start Backbone history a necessary step for bookmarkable URL's
     Backbone.history.start();
 
-
-
     $(document).ready(function(){
         $('[data-node-user-button]').click(function(){
             var contents = $('[data-userinput-postform-body]').val();
@@ -236,7 +251,6 @@ define([
         var submit = function(){
             var payload = {
                 body: $('[data-userinput-postform-body]').val(),
-                //parentId: '543945da607b7da856f01efc',
                 recaptcha_response_field: $('[data-userinput-postform-captcha]').val(),
                 recaptcha_challenge_field: $('[name="recaptcha_challenge_field"]').val()
             };
@@ -255,7 +269,7 @@ define([
                 Recaptcha.reload();
 
                 column = new ColumnView();
-                column.render(payload.parentId);
+                column.render({id:payload.parentId});
             });
         }
         $('[data-userinput-postform-captcha]').keyup(function(e){
@@ -267,5 +281,16 @@ define([
         $('[data-userinput-postform-submit]').click(submit);
     });
 
+
+    var autorefresh = function(time){
+        refresh = setTimeout(function(){
+            clearTimeout(refresh);
+            var last = $('[data-level]').last().attr('data-level');
+            console.log('refreshing : '+last);
+            columns[last].render({id:last, callback: function(){
+                autorefresh(refresh_time);
+            }});
+        }, time);
+    }
 
 });

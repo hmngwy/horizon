@@ -4,8 +4,8 @@ var express             = require('express'),
     Chance              = require('chance'),
     Recaptcha           = require('recaptcha').Recaptcha,
     restful             = require('node-restful'),
-    materializedPlugin  = require('mongoose-materialized'),
     mongoose            = require('mongoose'),
+    materializedPlugin  = require('mongoose-materialized'),
     _                   = require('underscore');
 
 // RECAPTCHA CONFIG
@@ -29,17 +29,43 @@ app.get('/sesh', function(req, res) {
 });
 
 // MONGOOSE SCHEMA SETUP
-mongoose.connect( process.env.MONGOLAB_URI || "mongodb://localhost/tree");
+mongoose.connect( (process.env.NODE_ENV=='development') ? "mongodb://localhost/tree3" : process.env.MONGOLAB_URI );
 
 var PostSchema = mongoose.Schema({
     body: { type: String, index: false },
     user: { type: String, index: false },
     created: { type: Date, default: Date.now },
     meta: { type: Object, index: false },
-    responses: {type:Number, index: false}
+    responses: {type:Number, default: 0}
+});
+
+PostSchema.pre('save', function(next){
+
+    if(this.parentId!=undefined)
+    {
+        if(this.parentId=='')
+            delete this.parentId; //foolproof nerf if empty string
+    }
+
+    next();
+});
+PostSchema.post('save', function(doc){
+
+    if(doc.parentId)
+        Post.count({parentId:doc.parentId}, function(err, count){ //get nodes under this parentID
+            Post.findOne({_id:doc.parentId}, function(err, post){ //get the parent node
+                if(post)
+                {
+                    post.responses = count; //write the number of nodes under it
+                    post.save();
+                }
+            });
+        });
+
 });
 
 PostSchema.plugin(materializedPlugin);
+
 var Post = mongoose.model('post', PostSchema);
 
 // REST RESOURCE SETUP
@@ -156,22 +182,10 @@ Resource.before('post', function(req, res, next){
 
 
 });
-Resource.after('post', function(req, res, next){
-    Post.count({parentId:res.locals.bundle.parentId}, function(err, count){ //get nodes under this parentID
-        Post.findOne({_id:res.locals.bundle.parentId}, function(err, post){ //get the parent node
-            if(post)
-            {
-                post.responses = count; //write the number of nodes under it
-                post.save();
-                next();
-            }
-        });
-    });
-});
 
 
 // RUN APP
 
 Resource.register(app, '/n');
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT);
