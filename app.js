@@ -9,8 +9,8 @@ var express             = require('express'),
     _                   = require('underscore');
 
 // RECAPTCHA CONFIG
-var PUBLIC_KEY  = '6LdS2_sSAAAAAMLZbnArIERAhwutv0KaQIP6lAWs',
-    PRIVATE_KEY = '6LdS2_sSAAAAAAOgKurCsZRyJ2RPhKBf1alCxwRn';
+var PUBLIC_KEY  = process.env.RECAPTCHA_KEY || '6LdS2_sSAAAAAMLZbnArIERAhwutv0KaQIP6lAWs',
+    PRIVATE_KEY = process.env.RECAPTCHA_KEY_PRIVATE || '6LdS2_sSAAAAAAOgKurCsZRyJ2RPhKBf1alCxwRn';
 
 // EXPRESS SETUP
 var app = express();
