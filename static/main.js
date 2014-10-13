@@ -37,7 +37,7 @@ define([
 
                 if (target.match(/\.(jpeg|jpg|gif|png)$/) != null) //if image url
                 {
-                    media_markup = '<img src="'+target+'">';
+                    media_markup = '<a href="'+target+'"><img src="'+target+'"></a>';
                     media_type = "image";
                 }else if(match_youtube_url&&match_youtube_url[7].length==11){ //if youtube URL
                     media_markup = '<a href="'+target+'" target="_blank" style="background-image: url(http://img.youtube.com/vi/'+match_youtube_url[7]+'/0.jpg);"></a>';
