@@ -174,4 +174,4 @@ Resource.after('post', function(req, res, next){
 
 Resource.register(app, '/n');
 
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
