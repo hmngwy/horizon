@@ -3,6 +3,7 @@ requirejs.config({
         jquery: '//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.2/jquery.min',
         underscore: '//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min',
         backbone: '//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min',
+        moment: '//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment.min',
     },
     shim: {
         backbone: {

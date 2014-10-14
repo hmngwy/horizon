@@ -42,10 +42,8 @@ var PostSchema = mongoose.Schema({
 PostSchema.pre('save', function(next){
 
     if(this.parentId!=undefined)
-    {
         if(this.parentId=='')
             delete this.parentId; //foolproof nerf if empty string
-    }
 
     next();
 });
@@ -126,10 +124,6 @@ Resource.route('ancestors', {
     }
 });
 
-Resource.after('get', function(req, res, next){
-    next();
-});
-
 Resource.before('post', function(req, res, next){
 
     delete req.body.user;
@@ -164,13 +158,10 @@ Resource.before('post', function(req, res, next){
             req.body.user = req.session.usernames[req.body.parentId];
         }
 
-
         recaptcha.verify(function(success, error_code) {
             if (success) {
-                //res.send('Recaptcha response valid.');
-                next();
+                next(); //valid, forwards we go
             } else {
-                //input invalid, send another form
                 res.status(400);
                 res.json({
                     status: 'failed',
@@ -180,12 +171,8 @@ Resource.before('post', function(req, res, next){
         });
     }
 
-
 });
 
-
 // RUN APP
-
 Resource.register(app, '/n');
-
 app.listen(process.env.PORT);

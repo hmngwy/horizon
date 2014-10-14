@@ -1,10 +1,45 @@
 define([
   'underscore',
   'backbone',
-  'jquery'
-], function(_, Backbone, $) {
+  'jquery',
+  'moment'
+], function(_, Backbone, $, moment) {
 
-    var refresh_time = 5000;
+    var base_refresh_time = 8000;
+    var refresh_time = base_refresh_time;
+
+
+    var get_media = function(text)
+    {
+        var media_markup = media_type = target = '';
+        uris = text.match(window.uri_pattern);
+        if(uris)
+        {
+            var target = uris[0];
+
+            var youtube_pattern = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+            var match_youtube_url = target.match(youtube_pattern);
+
+            if (target.match(/\.(jpeg|jpg|gif|png)$/) != null) //if image url
+            {
+                media_markup = '<a href="'+target+'" target="_blank"><img src="'+target+'"></a>';
+                media_type = "image";
+            }else if(match_youtube_url&&match_youtube_url[7].length==11){ //if youtube URL
+                media_markup = '<a href="'+target+'" target="_blank" style="background-image: url(http://img.youtube.com/vi/'+match_youtube_url[7]+'/0.jpg);"></a>';
+                media_type = "youtube";
+            }
+
+            if(target!='')
+                var transformed_text = text.replace(target, '<a href="'+target+'" class="media_link" target="_blank">'+target+'</a>');
+        }
+
+        return {
+            type: media_type,
+            markup: media_markup,
+            target: target,
+            text: transformed_text || text
+        };
+    }
 
     var Post = Backbone.Model.extend({
         url: '/n/',
@@ -26,37 +61,6 @@ define([
 
     var ColumnView = Backbone.View.extend({
         el: '.columns',
-        get_media: function(text)
-        {
-            var media_markup = media_type = target = '';
-            uris = text.match(window.uri_pattern);
-            if(uris)
-            {
-                var target = uris[0];
-
-                var youtube_pattern = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
-                var match_youtube_url = target.match(youtube_pattern);
-
-                if (target.match(/\.(jpeg|jpg|gif|png)$/) != null) //if image url
-                {
-                    media_markup = '<a href="'+target+'" target="_blank"><img src="'+target+'"></a>';
-                    media_type = "image";
-                }else if(match_youtube_url&&match_youtube_url[7].length==11){ //if youtube URL
-                    media_markup = '<a href="'+target+'" target="_blank" style="background-image: url(http://img.youtube.com/vi/'+match_youtube_url[7]+'/0.jpg);"></a>';
-                    media_type = "youtube";
-                }
-
-                if(target!='')
-                    var transformed_text = text.replace(target, '<a href="'+target+'" class="media_link" target="_blank">'+target+'</a>');
-            }
-
-            return {
-                type: media_type,
-                markup: media_markup,
-                target: target,
-                text: transformed_text || text
-            };
-        },
         render: function (options) {
             var options = options || {};
             options.id = options.id || 'root';
@@ -86,7 +90,7 @@ define([
                     if($('.columns').find('[data-level="'+options.id+'"]').length==0) //if this node isn't on the frontend
                     {
                         console.log('inserting because '+options.id);
-                        $('.columns').append( columnMarkup ); //inserting level
+                        $('.columns').prepend( columnMarkup ); //inserting level
                     }
 
                     //MOVE UP TO HERE
@@ -94,28 +98,39 @@ define([
                     columnEl = $('[data-depth="'+depth+'"]').attr('data-level', options.id);
 
 
-
+                    var added = 0;
                     //column contents
                     _.each(docs.models, function(doc){
 
-                        media = that.get_media(doc.get('body'));
+                        media = get_media(doc.get('body'));
                         doc.set('body', media.text)
-
 
                         if(columnEl.find('ul').find('[data-node="'+doc.get('_id')+'"]').length==0) //if node not in front-end
                         {
+                            doc.set('created_formatted', moment(doc.get('created')).format('MM-D-YYYY h:mm a'));
+                            doc.set('created_int', moment(doc.get('created')).unix());
                             var nodeMarkup = _.template($('[type="underscore/template"][name="node"]').html(), {
                                 post: doc,
                                 media_markup: (depth>1) ? media.markup : '',
                                 media_type: media.type,
                                 media_url: media.target
                             });
-                            columnEl.find('ul').append( nodeMarkup ); //inserting each node item
+                            if(options.id=='root')
+                                columnEl.find('ul').prepend( nodeMarkup ); //inserting each node item
+                            else
+                                columnEl.find('ul').append( nodeMarkup ); //inserting each node item
                             // console.log(columnEl.find('ul'));
-
+                            added++;
                         }
 
                     });
+
+
+
+                    // console.log('end open');
+
+                    if(options.callback)
+                        options.callback(added);
 
 
                     depth++;
@@ -124,23 +139,16 @@ define([
                         $('[data-depth="'+(depth)+'"]').remove();
                         depth++;
                     }
-
-                    // console.log('end open');
-
-                    if(options.callback)
-                        options.callback();
-
                     //set form parent id
                     $('[data-userinput-postform-parent]').val($('[data-level]').last().attr('data-level'));
-
-                    //resort everything just in case
 
                 }
             });
         },
         events: {
             'click [data-level="root"] [data-node]': 'open',
-            'click [data-level] [data-node-childrencount]': 'open'
+            'click [data-level] [data-node-childrencount]': 'open',
+            'click [data-level] [data-node-time]': 'open'
         },
         user_reference: function(el)
         {
@@ -177,13 +185,13 @@ define([
     app_router.on('route:getRoots', function (id) {
         console.log('get roots');
         columns['root'] = new ColumnView();
-        columns['root'].render({callback: function(){ autorefresh(refresh_time) }});
+        columns['root'].render({callback: function(added){ autorefresh(added) }});
     });
-    app_router.on('route:getPost', function (id) {
-        console.log('get post');
-        column = new ColumnView();
-        column.render({id:id, callback: function(){ autorefresh(refresh_time) }});
-    });
+    // app_router.on('route:getPost', function (id) {
+    //     console.log('get post');
+    //     column = new ColumnView();
+    //     column.render({id:id, callback: function(added){ autorefresh(added) }});
+    // });
     app_router.on('route:getPath', function (path) {
 
         //TODO: verify if path exists
@@ -209,7 +217,7 @@ define([
                     options = {id:level}
                     if(i == levels.length-1)
                         options.callback = function(){
-                            autorefresh(refresh_time);
+                            autorefresh($('[data-level="'+level+'"]').length);
                             //run sort on the very last
                             $('[data-level]').sort(function(a,b){
                                 return $(a).attr('data-depth') > $(b).attr('data-depth');
@@ -239,11 +247,12 @@ define([
     Backbone.history.start();
 
     $(document).ready(function(){
-        $('[data-node-user-button]').click(function(){
+        $(document).on('click', '[data-node-user-button]', function(){
             var contents = $('[data-userinput-postform-body]').val();
             $('[data-userinput-postform-body]').val(
-                contents + '@' + $(this).attr('data-node-user')
+                contents + ((contents[contents.length-1]==' '||contents.length==0) ? '' : ' ') + '@' + $(this).attr('data-node-user')
             );
+            console.log($(this).attr('data-node-user'));
         });
         $('[data-node-close]').click(function(){
             window.history.back();
@@ -274,23 +283,32 @@ define([
         }
         $('[data-userinput-postform-captcha]').keyup(function(e){
             var code = (e.keyCode ? e.keyCode : e.which);
-             if(code == 13) { //Enter keycode
-               submit();
-             }
+            if(code == 13) { //Enter keycode
+                submit();
+            }
+        });
+        $('[data-userinput-postform-body]').keyup(function(e){
+            media = get_media($('[data-userinput-postform-body]').val());
+            $('[data-media-preview]').html(media.markup).attr('data-media-preview', media.type);
+
         });
         $('[data-userinput-postform-submit]').click(submit);
     });
 
 
-    var autorefresh = function(time){
+    var autorefresh = function(added){
+        if(added == 0) refresh_time = (refresh_time<30000) ? refresh_time+4000 : 30000;
+        else if(added < 5) refresh_time = base_refresh_time * .75;
+        else if(added < 10) refresh_time = base_refresh_time * .5;
+        console.log("reloading in : " + refresh_time + 'ms');
         refresh = setTimeout(function(){
             clearTimeout(refresh);
             var last = $('[data-level]').last().attr('data-level');
             console.log('refreshing : '+last);
-            columns[last].render({id:last, callback: function(){
-                autorefresh(refresh_time);
+            columns[last].render({id:last, callback: function(added){
+                autorefresh(added);
             }});
-        }, time);
+        }, refresh_time);
     }
 
 });
