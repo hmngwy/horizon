@@ -136,6 +136,7 @@ body
     }
     [data-level]:last-of-type
     {
+        border-right: .5em solid #eee;
         background-color: #fafafa;
         opacity:1;
     }
@@ -152,6 +153,12 @@ body
             overflow:auto;
             box-sizing: border-box;
         }
+            [data-node]:hover {
+                background-color: #f4f4f4;
+            }
+            [data-level]:last-child [data-node]:hover {
+                background-color: #fff;
+            }
             [data-level]:last-child [data-node]:nth-child(even) {
                 background-color: rgba(255,255,255,0.9);
             }
