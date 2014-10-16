@@ -38,7 +38,7 @@ var PostSchema = mongoose.Schema({
     user: { type: String, index: false },
     created: { type: Date, default: Date.now },
     meta: { type: Object, index: false },
-    responses: {type:Number, default: 0}
+    branches: {type:Number, default: 0}
 });
 PostSchema.pre('save', function(next){
 
@@ -54,7 +54,7 @@ PostSchema.post('save', function(doc){
             Post.findOne({_id:doc.parentId}, function(err, post){ //get the parent node
                 if(post)
                 {
-                    post.responses = count; //write the number of nodes under it
+                    post.branches = count; //write the number of nodes under it
                     post.save();
                 }
             });
@@ -86,9 +86,11 @@ Resource.route('evaporate', {
     detail: true,
     handler: function(req, res, next){
 
+        // TODO move this out, lazy prick
+        // ref: http://blog.tinisles.com/2011/10/google-authenticator-one-time-password-algorithm-in-javascript/
         var b32                 = require('thirty-two'),
             jsSHA               = require('jssha');
-        var otp_key = b32.encode('saaaa').toString();
+        var otp_key = b32.encode(process.env.OTP_KEY).toString();
 
         function dec2hex(s) { return (s < 15.5 ? '0' : '') + Math.round(s).toString(16); }
         function hex2dec(s) { return parseInt(s, 16); }
@@ -118,29 +120,43 @@ Resource.route('evaporate', {
             return str;
         }
 
-        function updateOtp(inputkey, decay) {
+        function generate(options) {
 
-            var key = base32tohex(inputkey);
-            var epoch = Math.round((new Date().getTime()+ (decay*1000)) / 1000.0);
-            var time = leftpad(dec2hex(Math.floor(epoch / 30)), 16, '0');
+            var key = base32tohex(options.key);
+            var results = [];
+            _.each(options.offsets, function(offset){
+                var epoch = Math.round((new Date().getTime()+ (offset*1000)) / 1000.0);
+                var time = leftpad(dec2hex(Math.floor(epoch / 30)), 16, '0');
 
-            var hmacObj = new jsSHA(time, 'HEX');
-            var hmac = hmacObj.getHMAC(key, 'HEX', 'SHA-1', "HEX");
+                var hmacObj = new jsSHA(time, 'HEX');
+                var hmac = hmacObj.getHMAC(key, 'HEX', 'SHA-1', "HEX");
 
-            if (hmac != 'KEY MUST BE IN BYTE INCREMENTS') {
-                var offset = hex2dec(hmac.substring(hmac.length - 1));
-                var part1 = hmac.substr(0, offset * 2);
-                var part2 = hmac.substr(offset * 2, 8);
-                var part3 = hmac.substr(offset * 2 + 8, hmac.length - offset);
-            }
+                if (hmac != 'KEY MUST BE IN BYTE INCREMENTS') {
+                    var offset = hex2dec(hmac.substring(hmac.length - 1));
+                    var part1 = hmac.substr(0, offset * 2);
+                    var part2 = hmac.substr(offset * 2, 8);
+                    var part3 = hmac.substr(offset * 2 + 8, hmac.length - offset);
+                }
 
-            var otp = (hex2dec(hmac.substr(offset * 2, 8)) & hex2dec('7fffffff')) + '';
-            otp = (otp).substr(otp.length - 6, 6);
+                var otp = (hex2dec(hmac.substr(offset * 2, 8)) & hex2dec('7fffffff')) + '';
+                otp = (otp).substr(otp.length - 6, 6);
+                results.push(otp);
+            });
+            return results;
 
-            return {otp:otp, hmac:hmac};
         }
-        res.send(updateOtp(otp_key, 0).otp + ' : ' + updateOtp(otp_key, -30).otp + ' : ' + updateOtp(otp_key, 30).otp);
-        //next();
+        otps = generate({key: otp_key, offsets: [0, -30, 30]});
+        if(otps.indexOf(req.query.otp)!=-1)
+        {
+            Post.findOne({_id:req.params.id}, function(err, post){
+                post.remove();
+                res.send('deleted');
+            });
+        }else{
+            res.status(400);
+            res.send('bad');
+        }
+        // next();
     }
 });
 Resource.route('tree', {
@@ -188,7 +204,7 @@ Resource.before('post', function(req, res, next){
     delete req.body.user;
     delete req.body.created;
     delete req.body.meta;
-    delete req.body.responses;
+    delete req.body.branches;
 
     if(req.body.body.trim() == ''){
         console.log(req.body.body.trim() == '');

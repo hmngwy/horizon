@@ -24,14 +24,15 @@
 
 	<script type="underscore/template" name="level">
 		<div data-level="<%= id %>" data-depth="<%= depth %>">
+			<div data-level-tray><div class="title"><%= depth %></div></div>
 			<ul></ul>
 		</div>
 	</script>
 	<script type="underscore/template" name="node">
-		<li data-node="<%= post.get('_id') %>" data-node-absolute-path="<%= post.get('path') %>,<%= post.get('_id') %>" data-node-user="<%= post.get('user') %>" data-node-responses="<%= post.get('responses') || '0' %>" data-node-created="<%= post.get('created_int') %>" data-node-derp="<%= post.get('derp') %>">
+		<li data-node="<%= post.get('_id') %>" data-node-absolute-path="<%= post.get('path') %>,<%= post.get('_id') %>" data-node-user="<%= post.get('user') %>" data-node-branches="<%= post.get('branches') || '0' %>" data-node-created="<%= post.get('created_int') %>" data-node-derp="<%= post.get('derp') %>">
 			<div class="meta">
 				<span data-node-user-button data-node-user="<%= post.get('user') %>">@<%= post.get('user') %></span>
-				<span data-node-childrencount><%= post.get('responses') || '0' %> responses</span>
+				<span data-node-childrencount><%= post.get('branches') || '0' %> branches</span>
 				<span data-node-time><%= post.get('created_formatted') %></span>
 			</div>
 			<div data-node-media="<%= media_type %>" style="background-image:url(http://media.giphy.com/media/vxcuu6bLZDdm0/giphy.gif)"><%= media_markup %></div>

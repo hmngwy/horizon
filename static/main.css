@@ -121,6 +121,23 @@ body
         width:580px;
         /* opacity: 0.8; */
     }
+        [data-level-tray]
+        {
+            background-color: rgb(77, 77, 77);
+            padding: .25em;
+            border-right: 1px solid rgb(120, 120, 120);
+            color: white;
+        }
+        [data-level]:last-of-type [data-level-tray]
+        {
+            border: 0;
+        }
+        [data-level-tray] .title
+        {
+            font-size: 22px;
+            font-weight: bold;
+            text-align:center;
+        }
         [data-level] ul
         {
             padding: 0;
@@ -152,16 +169,18 @@ body
             position:relative;
             overflow:auto;
             box-sizing: border-box;
+            /* transition: background-color .25s; */
         }
             [data-node]:hover {
                 background-color: #f4f4f4;
             }
             [data-level]:last-child [data-node]:hover {
-                background-color: #fff;
+                background-color: rgba(228, 228, 228, 0.75);
+
             }
-            [data-level]:last-child [data-node]:nth-child(even) {
+            /* [data-level]:last-child [data-node]:nth-child(even) {
                 background-color: rgba(255,255,255,0.9);
-            }
+            } */
             [data-node-body]
             {
                 word-wrap: break-word;
@@ -179,9 +198,13 @@ body
         {
             margin-top: 0;
         }
-        [data-node].active
+        [data-level="root"] [data-node].active
         {
-            background-color: #fdffe6;
+            background-color: #fbf9bf;
+        }
+        [data-node].active .meta
+        {
+            background-color: #fbf9bf;
         }
         [data-node-media]
         {
@@ -210,7 +233,7 @@ body
             color: #999;
             font-size: .925em;
             margin-bottom: .5em;
-            background-color: #eee;
+            background-color: rgba(228, 228, 228, 0.75);
             line-height: 1.75em;
         }
         [data-node-user-button],
@@ -218,7 +241,6 @@ body
         {
             cursor:pointer;
             color:#777;
-            background-color: #eee;
             display:inline-block;
             padding: 0 .5em;
         }
@@ -229,7 +251,6 @@ body
         }
         [data-node-childrencount]
         {
-            font-weight: bold;
         }
         [data-node-time]
         {

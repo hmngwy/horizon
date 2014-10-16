@@ -77,7 +77,7 @@ define([
                         var depth = docs.models[0].get('path').split(",").length;
                     }else{
                         var deepest = parseInt($('[data-node="'+options.id+'"]').parents('[data-level]').attr('data-depth'));
-                        var depth = (deepest + 1) || 1;
+                        var depth = (deepest + 1) || 0;
                     }
 
 
@@ -86,21 +86,31 @@ define([
                     //set up column
                     var columnMarkup = _.template($('[type="underscore/template"][name="level"]').html(),
                         {id: options.id||'root', depth: depth});
-                    var columnEl = $('[data-depth="'+depth+'"]');
+
                     if($('.columns').find('[data-level="'+options.id+'"]').length==0) //if this node isn't on the frontend
                     {
                         console.log('inserting because '+options.id);
-                        $('.columns').prepend( columnMarkup ); //inserting level
+
+                        var i = 1;
+
+                        while($('[data-depth="'+i+'"]').length!=0) i++;
+
+                        if($('[data-depth]').length==0) $('.columns').append( columnMarkup ); //if empty
+                        else {
+                            console.log($('[data-depth="'+(i-1)+'"]'));
+                            $(columnMarkup).insertAfter('[data-depth="'+(i-1)+'"]');
+                        }
+
                     }
 
                     //MOVE UP TO HERE
-
+                    var columnEl = $('[data-depth="'+depth+'"]');
                     columnEl = $('[data-depth="'+depth+'"]').attr('data-level', options.id);
 
 
                     var added = 0;
                     //column contents
-                    _.each(docs.models, function(doc){
+                    _.each(docs.models, function(doc, i){
 
                         media = get_media(doc.get('body'));
                         doc.set('body', media.text)
@@ -116,7 +126,13 @@ define([
                                 media_url: media.target
                             });
                             if(options.id=='root')
-                                columnEl.find('ul').prepend( nodeMarkup ); //inserting each node item
+                            {
+                                if(columnEl.find('[data-level="'+options.id+'"] li').length==0) columnEl.find('ul').append( nodeMarkup );
+                                else{
+                                    $(nodeMarkup).insertAfter('[data-node="'+docs.models[i-1].get('_id')+'"]');
+                                    console.log('[data-node="'+docs.models[i-1].get('_id')+'"]');
+                                }
+                            }
                             else
                                 columnEl.find('ul').append( nodeMarkup ); //inserting each node item
                             // console.log(columnEl.find('ul'));
@@ -159,6 +175,7 @@ define([
         {
             active_absolute_path = ($(el.target).attr('data-node-absolute-path') || $(el.target).parents('[data-node]').attr('data-node-absolute-path')).replace(/^,/, '');
             location.hash = "#/p/"+ active_absolute_path;
+            console.log('eiii');
 
             // var id = $(el.target).attr('data-node') || $(el.target).parents('[data-node]').attr('data-node');
 
@@ -194,7 +211,7 @@ define([
     // });
     app_router.on('route:getPath', function (path) {
 
-        //TODO: verify if path exists
+        refresh_time = base_refresh_time;
 
         if(path)
             var levels = path.split(",");
@@ -218,14 +235,11 @@ define([
                     if(i == levels.length-1)
                         options.callback = function(){
                             autorefresh($('[data-level="'+level+'"]').length);
-                            //run sort on the very last
-                            $('[data-level]').sort(function(a,b){
-                                return $(a).attr('data-depth') > $(b).attr('data-depth');
-                            }).appendTo('.columns');
                         }
 
                     columns[level].render(options);
                 }
+                $('[data-node="'+level+'"]').addClass('active').siblings().removeClass('active');
             });
         }
 
